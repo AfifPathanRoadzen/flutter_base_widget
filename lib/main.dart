@@ -1,4 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_base_widget/country_picker_entry_field.dart';
+import 'package:flutter_base_widget/pin_code_field.dart';
+import 'package:pin_code_fields/pin_code_fields.dart';
+
+import 'app_button.dart';
 
 void main() {
   runApp(const MyApp());
@@ -30,11 +38,68 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  // Mobile Entry Field Country Picker
+  bool isLoading = false;
+  FocusNode mobileNumberFocusNode = FocusNode();
+  final TextEditingController _numberController = TextEditingController();
+  String _number = '';
 
-  void _incrementCounter() {
+  // Otp Entry Field Picker
+  TextEditingController otpController = TextEditingController();
+  String otp = '';
+  bool isLoadingOtp = false;
+  late StreamController<ErrorAnimationType> errorAnimationController;
+  late StreamController<Object?> errorController;
+
+  @override
+  void initState() {
+    errorAnimationController = StreamController<ErrorAnimationType>();
+    errorController = StreamController<Object?>.broadcast();
+    errorController.stream.listen((event) {
+      if (event != null) {
+        errorAnimationController.add(ErrorAnimationType.shake);
+      }
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _numberController.dispose();
+    otpController.dispose();
+    errorAnimationController.close();
+    super.dispose();
+  }
+
+  void _phoneCallAction() {
     setState(() {
-      _counter++;
+      isLoadingSetup(loading: true);
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        _numberController.text = '';
+        _number = '';
+        isLoadingSetup(loading: false);
+      });
+    });
+  }
+
+  void _otpAction() {
+    setState(() {
+      isLoadingOtpSetup(loading: true);
+    });
+
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        if (otp == '000000') {
+          errorController.add(() => 'Invalid PassCode');
+        } else {
+          otpController.text = '';
+          otp = '';
+        }
+        isLoadingOtpSetup(loading: false);
+      });
     });
   }
 
@@ -48,21 +113,91 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+            CountryPickerEntryField(
+              hint: "Enter Mobile Number",
+              controller: _numberController,
+              textInputType: const TextInputType.numberWithOptions(),
+              maxLength: 10,
+              onFieldSubmitted: (_) {
+                FocusScope.of(context).unfocus();
+              },
+              onChanged: (value) {
+                setState(() {
+                  _number = value;
+                });
+              },
+              textInputAction: TextInputAction.done,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+              ],
+              focusNode: mobileNumberFocusNode,
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            const SizedBox(
+              height: 30.0,
+            ),
+            BaseUIButton(
+              onPressed: isLoading || _number.length != 10
+                  ? null
+                  : () async {
+                      _phoneCallAction();
+                    },
+              loading: isLoading,
+              buttonText: 'Get OTP',
+            ),
+            const SizedBox(
+              height: 100.0,
+            ),
+            OtpField(
+              length: 6,
+              onChanged: (value) {
+                setState(() {
+                  otp = value;
+                });
+              },
+              errorAnimationController: errorAnimationController,
+              errorController: errorController,
+              pinCodeController: otpController,
+            ),
+            StreamBuilder<Object?>(
+              stream: errorController.stream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  var data = snapshot.data;
+                  if (data is String Function()) {
+                    data = data.call();
+                  }
+                  return Text(
+                    data.toString(),
+                    style: const TextStyle(fontSize: 14, color: Colors.red),
+                  );
+                } else {
+                  return Container();
+                }
+              },
+            ),
+            const SizedBox(
+              height: 30.0,
+            ),
+            BaseUIButton(
+              onPressed: isLoadingOtp || otp.length != 6
+                  ? null
+                  : () async {
+                      _otpAction();
+                    },
+              loading: isLoadingOtp,
+              buttonText: 'Verify',
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
+
+  void isLoadingSetup({required bool loading}) => setState(() {
+        isLoading = loading; //Disable Progressbar
+      });
+
+  void isLoadingOtpSetup({required bool loading}) => setState(() {
+        isLoadingOtp = loading; //Disable Progressbar
+      });
 }
