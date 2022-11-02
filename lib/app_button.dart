@@ -8,6 +8,7 @@ class BaseUIButton extends StatelessWidget {
       this.height = 48,
       this.buttonRadius = 27.0,
       this.color = const Color(0xFFEC6F3A),
+      this.borderColor,
       this.loading = false});
 
   final Future<void> Function()? onPressed;
@@ -15,6 +16,7 @@ class BaseUIButton extends StatelessWidget {
   final bool loading;
   final double height;
   final Color color;
+  final Color? borderColor;
   final double buttonRadius;
 
   @override
@@ -27,6 +29,7 @@ class BaseUIButton extends StatelessWidget {
             backgroundColor: color,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(buttonRadius),
+              side: BorderSide(color: borderColor ?? Colors.transparent)
             ),
           ),
           onPressed: onPressed == null || loading

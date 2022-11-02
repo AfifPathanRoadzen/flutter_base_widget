@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_base_widget/app_dialog.dart';
 import 'package:flutter_base_widget/country_picker_entry_field.dart';
 import 'package:flutter_base_widget/pin_code_field.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
@@ -67,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void dispose() {
     _numberController.dispose();
     otpController.dispose();
+    errorController.close();
     errorAnimationController.close();
     super.dispose();
   }
@@ -97,6 +99,59 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           otpController.text = '';
           otp = '';
+           AppDialogs().showDefaultDialog(
+            context,
+            "Set Fleet Status to Inactive?",
+                (context) => Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: const [
+                    Text(
+                      '•',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(
+                      width: 10.0,
+                    ),
+                    Flexible(
+                      child: Text(
+                        'All of your current services would be stopped.',
+                        style: TextStyle(
+                          fontSize: 14,),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: const [
+                    Text(
+                      '•',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w900),
+                    ),
+                    SizedBox(
+                      width: 10.0,
+                    ),
+                    Flexible(
+                      child: Text(
+                        'Until the status is changed to active, you won’t get any new service requests.',
+                        style: TextStyle(
+                          fontSize: 14,),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
         }
         isLoadingOtpSetup(loading: false);
       });
